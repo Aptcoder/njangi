@@ -54,6 +54,6 @@ export default class UserService {
     const payload = { user_id: existingUser.id };
 
     const accessToken = this.jwtService.sign(payload);
-    return { user: existingUser, accessToken };
+    return { user: { ...existingUser, password: undefined }, accessToken };
   }
 }
