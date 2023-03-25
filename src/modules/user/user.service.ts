@@ -51,7 +51,10 @@ export default class UserService {
     if (!isPasswordCorrect)
       throw new UnauthorizedException('Invalid email address or password');
 
-    const payload = { user_id: existingUser.id };
+    const payload = {
+      userId: existingUser.id,
+      phoneNumber: existingUser.phoneNumber,
+    };
 
     const accessToken = this.jwtService.sign(payload);
     return { user: { ...existingUser, password: undefined }, accessToken };
