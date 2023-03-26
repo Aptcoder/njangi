@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { NjangiInviteStatus } from 'src/common/constants';
 import {
   CreateNjangiDTO,
   UpdateNjangiInviteDTO,
@@ -15,6 +16,20 @@ export default class NjangiService {
 
   async getNjangis() {
     return this.njangiRepository.find();
+  }
+
+  async getNjangi(njangiId) {
+    return this.njangiRepository.findOne({
+      id: njangiId,
+    });
+  }
+
+  async getUserNjangis(userId: string) {
+    const njangiUsers = await this.njangiRepository.findNjangiUsers({
+      userId,
+    });
+
+    return njangiUsers;
   }
 
   async createNjangi(createNjangiDTP: CreateNjangiDTO, userId: string) {
@@ -58,10 +73,34 @@ export default class NjangiService {
     njangiInviteId,
     updateInviteDTO: UpdateNjangiInviteDTO,
   ) {
-    const invite = await this.njangiRepository.UpdateNjangiInvite(
-      njangiInviteId,
-      updateInviteDTO,
-    );
-    return invite;
+    return await this.njangiRepository.$transaction(async (tx) => {
+      let invite = await this.njangiRepository.findOneNjangiInvite({
+        id: njangiInviteId,
+      });
+      if (!invite) {
+        throw new NotFoundException('Invite not found');
+      }
+
+      if (
+        updateInviteDTO.status === NjangiInviteStatus.accepted &&
+        invite.status !== NjangiInviteStatus.accepted
+      ) {
+        await this.njangiRepository.createNjangiUser(
+          {
+            njangiId: invite.njangiId,
+            userId: invite.userId,
+          },
+          tx,
+        );
+      }
+
+      invite = await this.njangiRepository.UpdateNjangiInvite(
+        njangiInviteId,
+        updateInviteDTO,
+        tx,
+      );
+
+      return invite;
+    });
   }
 }

@@ -28,6 +28,14 @@ export default class NjangiController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('/me')
+  async getAllUserNjangis(@Req() req) {
+    const { userId } = req.user;
+    const njangis = await this.njangiService.getUserNjangis(userId);
+    return Helper.formatResponse('Njangis', { njangis });
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Post('/')
   async createNjangi(@Body() createNjangiDTO: CreateNjangiDTO, @Req() req) {
     const { userId } = req.user;
@@ -61,5 +69,14 @@ export default class NjangiController {
     // const { userId } = req.user;
     const invites = await this.njangiService.getNjangiInvites(njangiId);
     return Helper.formatResponse('Njangi invites', { invites });
+  }
+
+  @NjangiRole('member')
+  @UseGuards(JwtAuthGuard, NjangiRoleGuard)
+  @Get('/:njangiId')
+  async getNjangi(@Req() req, @Param('njangiId') njangiId: string) {
+    // const { userId } = req.user;
+    const njangi = await this.njangiService.getNjangi(njangiId);
+    return Helper.formatResponse('Njangi', { njangi });
   }
 }

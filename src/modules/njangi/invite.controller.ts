@@ -18,10 +18,16 @@ export default class InviteController {
   constructor(private readonly njangiService: NjangiService) {}
 
   @UseGuards(JwtAuthGuard)
-  @Get('/')
-  async getInvites(@Req() req) {
+  @Get('/me')
+  async getUserInvites(@Req() req) {
     const { userId } = req.user;
     const invites = await this.njangiService.getNjangiInvites(null, userId);
+    return Helper.formatResponse('Invites', { invites });
+  }
+
+  @Get('/')
+  async getInvites() {
+    const invites = await this.njangiService.getNjangiInvites();
     return Helper.formatResponse('Invites', { invites });
   }
 

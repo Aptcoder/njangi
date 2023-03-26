@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/common/prisma/prisma.service';
 
 interface NjangiData {
@@ -13,12 +14,23 @@ interface InviteInputData {
   njangiId: string;
 }
 
+type ClientType = Prisma.TransactionClient;
+// Omit<
+//   PrismaService,
+//   '$connect' | '$disconnect' | '$on' | '$transaction' | '$use'
+// >;
 @Injectable()
 export default class NjangiRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async find() {
-    const njangis = await this.prismaService.njangi.findMany();
+  $transaction(func: (prisma: Prisma.TransactionClient) => Promise<unknown>) {
+    return this.prismaService.$transaction(func);
+  }
+
+  async find(query: object = {}) {
+    const njangis = await this.prismaService.njangi.findMany({
+      where: query,
+    });
     return njangis;
   }
 
@@ -32,13 +44,25 @@ export default class NjangiRepository {
     return invites;
   }
 
+  async findNjangiUsers(query: object = {}) {
+    const njangiUsers = await this.prismaService.njangiUsers.findMany({
+      where: query,
+      include: {
+        njangi: true,
+      },
+    });
+    return njangiUsers;
+  }
+
   async UpdateNjangiInvite(
     njangiInviteId: string,
     inviteUpdateData: {
       status: 'pending' | 'accepted' | 'ignored';
     },
+    tx?: ClientType,
   ) {
-    const invite = await this.prismaService.njangiInvite.update({
+    const client = tx ? tx : this.prismaService;
+    const invite = await client.njangiInvite.update({
       data: inviteUpdateData,
       where: {
         id: njangiInviteId,
@@ -48,8 +72,12 @@ export default class NjangiRepository {
   }
 
   async findOne(query: object) {
-    const user = await this.prismaService.user.findFirst({
+    const user = await this.prismaService.njangi.findFirst({
       where: query,
+      include: {
+        users: true,
+        invites: true,
+      },
     });
 
     return user;
@@ -108,5 +136,25 @@ export default class NjangiRepository {
       },
     });
     return invite;
+  }
+
+  async createNjangiUser(input: InviteInputData, tx?: ClientType) {
+    const client = tx ? tx : this.prismaService;
+    const njangiUser = await client.njangiUsers.create({
+      data: {
+        role: 'member',
+        user: {
+          connect: {
+            id: input.userId,
+          },
+        },
+        njangi: {
+          connect: {
+            id: input.njangiId,
+          },
+        },
+      },
+    });
+    return njangiUser;
   }
 }
