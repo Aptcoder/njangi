@@ -1,5 +1,4 @@
 import {
-  IsBoolean,
   IsEnum,
   IsInt,
   IsMobilePhone,
@@ -7,7 +6,7 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
-import { NjangiInviteStatus } from '../constants';
+import { NjangiDurationEnum, NjangiInviteStatusEnum } from '../enums';
 
 export class CreateNjangiDTO {
   @IsString()
@@ -21,6 +20,11 @@ export class CreateNjangiDTO {
   @IsInt()
   @IsOptional()
   maxUser?: number;
+
+  @IsString()
+  @IsEnum(NjangiDurationEnum)
+  @IsNotEmpty()
+  duration: NjangiDurationEnum;
 }
 
 export class CreateNjangiInviteDTO {
@@ -35,6 +39,6 @@ export class CreateNjangiInviteDTO {
 export class UpdateNjangiInviteDTO {
   @IsString()
   @IsNotEmpty()
-  @IsEnum(NjangiInviteStatus)
+  @IsEnum(NjangiInviteStatusEnum)
   status: 'pending' | 'accepted' | 'ignored';
 }

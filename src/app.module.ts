@@ -5,6 +5,8 @@ import { LoggerModule } from 'nestjs-pino';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { UserModule } from './modules/user/user.module';
 import { NjangiModule } from './modules/njangi/njangi.module';
+import { WalletModule } from './modules/wallet/wallet.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -15,6 +17,8 @@ import { NjangiModule } from './modules/njangi/njangi.module';
     PrismaModule,
     UserModule,
     NjangiModule,
+    WalletModule,
+    ScheduleModule.forRoot(),
   ],
   controllers: [AppController],
   providers: [],

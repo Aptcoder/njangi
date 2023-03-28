@@ -7,11 +7,13 @@ import { SignInUserDTO, SignUpUserDTO } from 'src/common/dtos/user.dtos';
 import UserRepository from './user.repository';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import WalletRepository from '../wallet/wallet.repository';
 
 @Injectable()
 export default class UserService {
   constructor(
     private readonly userRepository: UserRepository,
+    private readonly walletRepository: WalletRepository,
     private readonly jwtService: JwtService,
   ) {}
 
@@ -27,11 +29,19 @@ export default class UserService {
       throw new ConflictException('User with this email already exists');
     }
     const hashedPassword = await bcrypt.hash(signUpUserDTO.password, 10);
+    const user = await this.userRepository.$transaction(async (tx) => {
+      const user = await this.userRepository.create(
+        {
+          ...signUpUserDTO,
+          password: hashedPassword,
+        },
+        tx,
+      );
 
-    const user = this.userRepository.create({
-      ...signUpUserDTO,
-      password: hashedPassword,
+      await this.walletRepository.create({ userId: user.id }, tx);
+      return user;
     });
+
     return user;
   }
 

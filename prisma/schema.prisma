@@ -32,8 +32,17 @@ model User {
 
   invites NjangiInvite[]
 
+  transactions Transaction[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  wallet    Wallet?
+}
+
+enum NjangiDuration {
+  weekly
+  monthly
+  biweekly
 }
 
 model Njangi {
@@ -41,6 +50,8 @@ model Njangi {
   name     String
   maxUsers Int?
   amount   Int
+
+  duration NjangiDuration @default(weekly)
 
   users NjangiUsers[]
 
@@ -74,4 +85,44 @@ model NjangiInvite {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Wallet {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @unique @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id])
+
+  balance Int @default(0)
+}
+
+enum TransactionType {
+  debit
+  credit
+}
+
+enum TransactionStatus {
+  pending
+  completed
+  failed
+}
+
+model Transaction {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  userId String @unique @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id])
+
+  balanceBefore Int
+  balanceAfter  Int
+
+  amount Int
+
+  externalReference String?
+
+  message     String
+  description String
+
+  txType TransactionType
+
+  status TransactionStatus @default(pending)
 }

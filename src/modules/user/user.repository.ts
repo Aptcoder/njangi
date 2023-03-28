@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/common/prisma/prisma.service';
 
 interface UserData {
@@ -19,9 +20,13 @@ const userSelectOption = {
 export default class UserRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
+  $transaction(func: (prisma: Prisma.TransactionClient) => Promise<unknown>) {
+    return this.prismaService.$transaction(func);
+  }
+
   async find() {
     const users = await this.prismaService.user.findMany({
-      select: userSelectOption,
+      select: { ...userSelectOption, wallet: true },
     });
     return users;
   }
@@ -34,8 +39,9 @@ export default class UserRepository {
     return user;
   }
 
-  async create(userData: UserData) {
-    const user = await this.prismaService.user.create({
+  async create(userData: UserData, tx?: Prisma.TransactionClient) {
+    const client = tx ? tx : this.prismaService;
+    const user = await client.user.create({
       data: userData,
       select: userSelectOption,
     });

@@ -1,17 +1,22 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { NjangiInviteStatus } from 'src/common/constants';
+import { NjangiInviteStatusEnum } from 'src/common/enums';
 import {
   CreateNjangiDTO,
   UpdateNjangiInviteDTO,
 } from 'src/common/dtos/njangi.dtos';
 import UserRepository from '../user/user.repository';
 import NjangiRepository from './njangi.repository';
+import { Logger } from 'nestjs-pino';
+import { SchedulerRegistry } from '@nestjs/schedule';
+import { CronJob } from 'cron';
 
 @Injectable()
 export default class NjangiService {
   constructor(
     private readonly njangiRepository: NjangiRepository,
     private readonly userRepository: UserRepository,
+    private logger: Logger,
+    private schedulerRegistry: SchedulerRegistry,
   ) {}
 
   async getNjangis() {
@@ -32,11 +37,14 @@ export default class NjangiService {
     return njangiUsers;
   }
 
-  async createNjangi(createNjangiDTP: CreateNjangiDTO, userId: string) {
+  async createNjangi(createNjangiDTO: CreateNjangiDTO, userId: string) {
     const njangi = await this.njangiRepository.create({
-      ...createNjangiDTP,
+      ...createNjangiDTO,
       creatorId: userId,
     });
+
+    // const job = new CronJob()
+
     return njangi;
   }
 
@@ -82,8 +90,8 @@ export default class NjangiService {
       }
 
       if (
-        updateInviteDTO.status === NjangiInviteStatus.accepted &&
-        invite.status !== NjangiInviteStatus.accepted
+        updateInviteDTO.status === NjangiInviteStatusEnum.accepted &&
+        invite.status !== NjangiInviteStatusEnum.accepted
       ) {
         await this.njangiRepository.createNjangiUser(
           {

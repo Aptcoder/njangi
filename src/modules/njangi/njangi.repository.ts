@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { NjangiDurationEnum } from 'src/common/enums';
 import { PrismaService } from 'src/common/prisma/prisma.service';
 
 interface NjangiData {
@@ -7,6 +8,7 @@ interface NjangiData {
   maxUsers?: number;
   creatorId: string;
   amount: number;
+  duration: NjangiDurationEnum;
 }
 
 interface InviteInputData {
